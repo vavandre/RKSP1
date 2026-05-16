@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: infra-management-api
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: JWT_SECRET
+        sync: false
+      - key: DB_PATH
+        value: ./data/infra.db
+      - key: CORS_ORIGIN
+        value: https://infra-management-ui.onrender.com
+
+  - type: static
+    name: infra-management-ui
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
