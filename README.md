@@ -71,15 +71,3 @@ docker compose up --build
 - Frontend: `http://localhost:8080`
 - Backend: `http://localhost:4000`
 
-## Закрытие требований курсовой
-1. Анализ предметной области - `docs/domain-analysis.md`
-2. Архитектура и UML - `docs/architecture.md`, `docs/uml/*`
-3. Выбор стека fullstack CRUD - данный `README` + `docs/architecture.md`
-4. Клиент+сервер, auth, БД, роли, валидация - `client/*`, `server/src/*`
-5. Фаззинг/негативное тестирование - `server/tests/api.test.js`, `docs/testing.md`
-6. Код в VCS, Dockerfile, структура - `.git`, `client/Dockerfile`, `server/Dockerfile`, этот `README`
-7. Облачное развертывание - `docs/cloud-deploy.md`
-8. Презентация с графикой - `docs/presentation-plan.md` + UML диаграммы
-
-## Дополнительно
-- Соответствие 12-factor: `docs/twelve-factor.md`
