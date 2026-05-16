@@ -5,7 +5,7 @@
 ## Стек
 - Frontend: React + Vite
 - Backend: Node.js + Express
-- DB: SQLite (`better-sqlite3`)
+- DB: PostgreSQL (`pg`)
 - Auth: JWT + RBAC (`admin`, `engineer`, `viewer`)
 - Validation: Zod
 - Tests: Vitest + Supertest
@@ -15,7 +15,7 @@
 ```text
 .
 ├── client/                 # React UI
-├── server/                 # REST API + SQLite
+├── server/                 # REST API + PostgreSQL
 ├── docs/                   # Документация курсовой
 │   └── uml/                # UML (PlantUML)
 ├── docker-compose.yml
@@ -28,6 +28,7 @@
 ```bash
 cd server
 npm install
+# локально должен быть запущен PostgreSQL
 npm run dev
 ```
 
@@ -40,6 +41,18 @@ npm run dev
 
 - Client: `http://localhost:5173`
 - API: `http://localhost:4000/api/health`
+
+### Переменные окружения сервера
+```env
+PORT=4000
+JWT_SECRET=change-me-for-production
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=infra_management
+DB_USER=postgres
+DB_PASSWORD=postgres
+CORS_ORIGIN=http://localhost:8080
+```
 
 ## Тестовые пользователи
 - `admin / Admin123!`

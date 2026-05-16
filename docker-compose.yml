@@ -1,19 +1,42 @@
 name: kr-rksp
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: infra-management-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: infra_management
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d infra_management"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   server:
     build: ./server
     container_name: infra-management-server
     restart: unless-stopped
     ports:
       - "4000:4000"
-    volumes:
-      - server_data:/app/data
     environment:
       PORT: "4000"
       JWT_SECRET: change-me-in-production
-      DB_PATH: /app/data/infra.db
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: infra_management
+      DB_USER: postgres
+      DB_PASSWORD: postgres
       CORS_ORIGIN: http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   client:
     build: ./client
@@ -25,4 +48,4 @@ services:
       - server
 
 volumes:
-  server_data:
+  postgres_data:

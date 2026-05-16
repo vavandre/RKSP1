@@ -5,7 +5,6 @@ COPY package.json package-lock.json* ./
 RUN npm install --omit=dev
 
 COPY src ./src
-RUN mkdir -p data
 
 EXPOSE 4000
 CMD ["npm", "start"]
