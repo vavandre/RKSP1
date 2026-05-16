@@ -1,48 +1,56 @@
 import { Router } from "express";
-import { db } from "../db.js";
+import { query } from "../db.js";
 import { authorize } from "../middleware/auth.js";
 import { createTicketSchema, updateTicketSchema } from "../validation/schemas.js";
 
 const router = Router();
 
-router.get("/", authorize("admin", "engineer", "viewer"), (req, res) => {
-  const tickets = db
-    .prepare(
-      `SELECT t.*, a.name as asset_name, u.full_name as assignee_name
+router.get("/", authorize("admin", "engineer", "viewer"), async (req, res, next) => {
+  try {
+    const result = await query(
+      `SELECT t.*, a.name AS asset_name, u.full_name AS assignee_name
        FROM tickets t
        LEFT JOIN assets a ON a.id = t.asset_id
        LEFT JOIN users u ON u.id = t.assignee_id
        ORDER BY t.id DESC`
-    )
-    .all();
-  res.json(tickets);
-});
-
-router.post("/", authorize("admin", "engineer"), (req, res, next) => {
-  try {
-    const payload = createTicketSchema.parse(req.body);
-    const result = db
-      .prepare(
-        `INSERT INTO tickets (title, description, priority, status, asset_id, assignee_id, created_by)
-         VALUES (@title, @description, @priority, @status, @asset_id, @assignee_id, @created_by)`
-      )
-      .run({
-        ...payload,
-        assignee_id: payload.assignee_id ?? null,
-        created_by: req.user.sub
-      });
-
-    return res.status(201).json(db.prepare("SELECT * FROM tickets WHERE id = ?").get(result.lastInsertRowid));
+    );
+    return res.json(result.rows);
   } catch (err) {
     return next(err);
   }
 });
 
-router.put("/:id", authorize("admin", "engineer"), (req, res, next) => {
+router.post("/", authorize("admin", "engineer"), async (req, res, next) => {
+  try {
+    const payload = createTicketSchema.parse(req.body);
+    const insertResult = await query(
+      `INSERT INTO tickets (title, description, priority, status, asset_id, assignee_id, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id`,
+      [
+        payload.title,
+        payload.description,
+        payload.priority,
+        payload.status,
+        payload.asset_id,
+        payload.assignee_id ?? null,
+        req.user.sub
+      ]
+    );
+    const createdId = insertResult.rows[0].id;
+    const createdResult = await query("SELECT * FROM tickets WHERE id = $1", [createdId]);
+    return res.status(201).json(createdResult.rows[0]);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.put("/:id", authorize("admin", "engineer"), async (req, res, next) => {
   try {
     const payload = updateTicketSchema.parse(req.body);
     const id = Number(req.params.id);
-    const current = db.prepare("SELECT * FROM tickets WHERE id = ?").get(id);
+    const currentResult = await query("SELECT * FROM tickets WHERE id = $1", [id]);
+    const current = currentResult.rows[0];
     if (!current) {
       return res.status(404).json({ message: "Ticket не найден" });
     }
@@ -53,26 +61,32 @@ router.put("/:id", authorize("admin", "engineer"), (req, res, next) => {
       assignee_id: payload.assignee_id === undefined ? current.assignee_id : payload.assignee_id
     };
 
-    db.prepare(
+    await query(
       `UPDATE tickets
-       SET title = @title, description = @description, priority = @priority, status = @status,
-           asset_id = @asset_id, assignee_id = @assignee_id, updated_at = CURRENT_TIMESTAMP
-       WHERE id = @id`
-    ).run({ ...updated, id });
+       SET title = $1, description = $2, priority = $3, status = $4,
+           asset_id = $5, assignee_id = $6, updated_at = NOW()
+       WHERE id = $7`,
+      [updated.title, updated.description, updated.priority, updated.status, updated.asset_id, updated.assignee_id, id]
+    );
 
-    return res.json(db.prepare("SELECT * FROM tickets WHERE id = ?").get(id));
+    const updatedResult = await query("SELECT * FROM tickets WHERE id = $1", [id]);
+    return res.json(updatedResult.rows[0]);
   } catch (err) {
     return next(err);
   }
 });
 
-router.delete("/:id", authorize("admin"), (req, res) => {
+router.delete("/:id", authorize("admin"), async (req, res, next) => {
   const id = Number(req.params.id);
-  const result = db.prepare("DELETE FROM tickets WHERE id = ?").run(id);
-  if (result.changes === 0) {
-    return res.status(404).json({ message: "Ticket не найден" });
+  try {
+    const result = await query("DELETE FROM tickets WHERE id = $1", [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Ticket не найден" });
+    }
+    return res.status(204).send();
+  } catch (err) {
+    return next(err);
   }
-  return res.status(204).send();
 });
 
 export default router;

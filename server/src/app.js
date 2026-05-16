@@ -10,8 +10,8 @@ import { authenticate } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { config } from "./config.js";
 
-initDb();
-seedDb();
+await initDb();
+await seedDb();
 
 const app = express();
 

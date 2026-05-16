@@ -13,8 +13,12 @@ export function errorHandler(err, req, res, next) {
     });
   }
 
-  if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+  if (err.code === "23505") {
     return res.status(409).json({ message: "Запись с таким значением уже существует" });
+  }
+
+  if (err.code === "23503") {
+    return res.status(400).json({ message: "Неверная ссылка на связанную запись" });
   }
 
   return res.status(500).json({
