@@ -16,8 +16,6 @@
 .
 ├── client/                 # React UI
 ├── server/                 # REST API + PostgreSQL
-├── docs/                   # Документация курсовой
-│   └── uml/                # UML (PlantUML)
 ├── docker-compose.yml
 └── README.md
 ```
