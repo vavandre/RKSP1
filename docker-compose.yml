@@ -1,21 +1,28 @@
-version: "3.9"
+name: kr-rksp
 
 services:
   server:
     build: ./server
+    container_name: infra-management-server
+    restart: unless-stopped
     ports:
       - "4000:4000"
     volumes:
-      - ./server/data:/app/data
+      - server_data:/app/data
     environment:
-      - PORT=4000
-      - JWT_SECRET=change-me-in-production
-      - DB_PATH=./data/infra.db
-      - CORS_ORIGIN=http://localhost:8080
+      PORT: "4000"
+      JWT_SECRET: change-me-in-production
+      DB_PATH: /app/data/infra.db
+      CORS_ORIGIN: http://localhost:8080
 
   client:
     build: ./client
+    container_name: infra-management-client
+    restart: unless-stopped
     ports:
       - "8080:80"
     depends_on:
       - server
+
+volumes:
+  server_data:
